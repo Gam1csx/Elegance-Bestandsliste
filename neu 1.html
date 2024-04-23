@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artikel Liste</title>
+<style>
+  body {
+    background-color: #333;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #666;
+  }
+  th {
+    background-color: #111;
+  }
+  tr:nth-child(even) {
+    background-color: #222;
+  }
+  input[type="number"], input[type="text"] {
+    width: 80px;
+    background-color: #444;
+    color: #fff;
+    border: none;
+    padding: 5px;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+
+<table>
+  <thead>
+    <tr>
+      <th>Artikel</th>
+      <th>Bestand</th>
+      <th>Einkauf</th>
+      <th>Verkauf</th>
+      <th>Neukauf</th>
+      <th>Kosten</th>
+    </tr>
+  </thead>
+  <tbody id="article-list">
+    <!-- Hier werden die Artikel dynamisch hinzugefügt -->
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="6"><button id="add-article">Artikel hinzufügen</button></td>
+    </tr>
+  </tfoot>
+</table>
+
+<script>
+  const articleList = document.getElementById('article-list');
+  const addArticleBtn = document.getElementById('add-article');
+
+  // Funktion um eine Zeile für einen Artikel hinzuzufügen
+  function addArticleRow(article) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" value="${article.name}" class="article-name"></td>
+      <td><input type="number" value="${article.stock}" class="article-stock"></td>
+      <td><input type="number" value="${article.purchaseCost}" class="article-purchase-cost"></td>
+      <td><input type="number" value="${article.saleCost}" class="article-sale-cost"></td>
+      <td class="article-new-purchase">${calculateNewPurchase(article.stock)}</td>
+      <td class="article-cost">${calculateCost(article.stock, article.purchaseCost)}</td>
+    `;
+    articleList.appendChild(row);
+  }
+
+  // Funktion zum Berechnen der Neukaufmenge
+  function calculateNewPurchase(stock) {
+    if (stock < 100) {
+      return 100 - stock;
+    } else {
+      return 0;
+    }
+  }
+
+  // Funktion zum Berechnen der Kosten
+  function calculateCost(stock, purchaseCost) {
+    return calculateNewPurchase(stock) * purchaseCost;
+  }
+
+  // Artikel Daten aus dem Local Storage laden, wenn vorhanden, sonst Standardwerte verwenden
+  let articles = JSON.parse(localStorage.getItem('articles')) || [
+    { name: 'Artikel 1', stock: 80, purchaseCost: 5, saleCost: 10 },
+    { name: 'Artikel 2', stock: 120, purchaseCost: 8, saleCost: 15 },
+    { name: 'Artikel 3', stock: 90, purchaseCost: 7, saleCost: 12 }
+  ];
+
+  // Tabelle aufbauen
+  articles.forEach(article => addArticleRow(article));
+
+  // Artikel hinzufügen
+  addArticleBtn.addEventListener('click', () => {
+    const newArticle = { name: 'Neuer Artikel', stock: 0, purchaseCost: 0, saleCost: 0 };
+    articles.push(newArticle);
+    addArticleRow(newArticle);
+    saveData();
+  });
+
+  // Event Listener für Änderungen in den Eingabefeldern
+  articleList.addEventListener('input', (event) => {
+    const target = event.target;
+    const row = target.closest('tr');
+    const name = row.querySelector('.article-name').value;
+    const stock = parseInt(row.querySelector('.article-stock').value);
+    const purchaseCost = parseFloat(row.querySelector('.article-purchase-cost').value);
+    const saleCost = parseFloat(row.querySelector('.article-sale-cost').value);
+    const newPurchase = calculateNewPurchase(stock);
+    const cost = calculateCost(stock, purchaseCost);
+    const index = Array.from(articleList.children).indexOf(row);
+    articles[index] = { name, stock, purchaseCost, saleCost };
+    row.querySelector('.article-new-purchase').textContent = newPurchase;
+    row.querySelector('.article-cost').textContent = cost;
+    saveData();
+  });
+
+  // Daten speichern
+  function saveData() {
+    localStorage.setItem('articles', JSON.stringify(articles));
+  }
+</script>
+
+</body>
+</html>
